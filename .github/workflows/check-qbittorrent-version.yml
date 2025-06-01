@@ -1,26 +1,27 @@
-name: Update qBittorrent Version from Docker Hub
+name: Update qBittorrent Version
 
 on:
   schedule:
-    - cron: '0 6 * * *'  # Run every day at 06:00 UTC
-  workflow_dispatch:      # Allow manual trigger from UI
+    - cron: '0 2 * * *'  # every day at 2:00 UTC
+  workflow_dispatch:
 
 jobs:
   check-version:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false  # we will set our own token later
 
-      - name: Install jq and yq
+      - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y jq
           curl -sL https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -o /usr/local/bin/yq
           chmod +x /usr/local/bin/yq
 
-      - name: Get latest Docker image tag
+      - name: Get latest qBittorrent image version
         id: latest
         run: |
           latest=$(curl -s "https://registry.hub.docker.com/v2/repositories/linuxserver/qbittorrent/tags?page_size=100" \
@@ -33,37 +34,27 @@ jobs:
           current=$(yq '.options.QBT_VERSION' ./qbittorrent_nox/config.yaml)
           echo "current_version=$current" >> "$GITHUB_OUTPUT"
 
-      - name: Debug Git setup
+      - name: Show versions
         run: |
-          echo "GitHub actor: ${{ github.actor }}"
-          echo "Repository: ${{ github.repository }}"
-          git remote -v
-          git config --list
+          echo "Latest: ${{ steps.latest.outputs.latest_version }}"
+          echo "Current: ${{ steps.current.outputs.current_version }}"
 
       - name: Update config.yaml if version changed
-        if: steps.latest.outputs.latest_version != steps.current.outputs.current_version
+        if: ${{ steps.latest.outputs.latest_version != steps.current.outputs.current_version }}
         run: |
           echo "Updating from ${{ steps.current.outputs.current_version }} to ${{ steps.latest.outputs.latest_version }}"
-
-          # Update YAML fields
           yq e '.options.QBT_VERSION = "${{ steps.latest.outputs.latest_version }}"' -i ./qbittorrent_nox/config.yaml
           yq e '.version = "${{ steps.latest.outputs.latest_version }}"' -i ./qbittorrent_nox/config.yaml
 
-          # Commit the change
+      - name: Commit and push changes
+        if: ${{ steps.latest.outputs.latest_version != steps.current.outputs.current_version }}
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          echo "${GH_PAT}"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add ./qbittorrent_nox/config.yaml
+          git add qbittorrent_nox/config.yaml
           git commit -m "Update qBittorrent version to ${{ steps.latest.outputs.latest_version }}"
-
-          # Update remote to use PAT
-          echo "Setting remote with PAT..."
-          git remote set-url origin https://x-access-token:${{ secrets.GH_PAT }}@github.com/${{ github.repository }}
-          git remote -v
-
-          # Push the change
+          git remote set-url origin https://x-access-token:${GH_PAT}@github.com/${{ github.repository }}
           git push origin HEAD:main
-
-      - name: No update needed
-        if: steps.latest.outputs.latest_version == steps.current.outputs.current_version
-        run: |
-          echo "Already up to date: ${{ steps.current.outputs.current_version }}"
