@@ -22,7 +22,7 @@ ports:
   8080/tcp: 8080
 options:
   QBT_EULA: "ACCEPTEULA"
-  QBT_VERSION: "latest"
+  QBT_VERSION: "5.1.0"
   QBT_WEBUI_PORT: 8080
   TZ: "Europe/Budapest"
 schema:
