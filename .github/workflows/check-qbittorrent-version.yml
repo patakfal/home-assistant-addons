@@ -1,9 +1,9 @@
-name: Update qBittorrent Version
+name: Update qBittorrent Version from Docker Hub
 
 on:
   schedule:
-    - cron: '0 6 * * *'  # Daily at 06:00 UTC
-  workflow_dispatch:     # Manual trigger support
+    - cron: '0 6 * * *'  # Every day at 6:00 UTC
+  workflow_dispatch:
 
 jobs:
   check-version:
@@ -20,10 +20,10 @@ jobs:
           curl -sL https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -o /usr/local/bin/yq
           chmod +x /usr/local/bin/yq
 
-      - name: Get latest qBittorrent version
+      - name: Get latest Docker image tag
         id: latest
         run: |
-          latest=$(curl -s https://api.github.com/repos/qbittorrent/qBittorrent/releases/latest | jq -r .tag_name | sed 's/^release-//')
+          latest=$(curl -s "https://registry.hub.docker.com/v2/repositories/linuxserver/qbittorrent/tags?page_size=100" | jq -r '[.results[].name | select(test("^[0-9]+\\.[0-9]+\\.[0-9]+$"))] | sort_by(split(".") | map(tonumber)) | reverse | .[0]')
           echo "latest_version=$latest" >> "$GITHUB_OUTPUT"
 
       - name: Get current version from config.yaml
@@ -32,22 +32,20 @@ jobs:
           current=$(yq '.options.QBT_VERSION' ./qbittorrent_nox/config.yaml)
           echo "current_version=$current" >> "$GITHUB_OUTPUT"
 
-      - name: Compare and update config.yaml if version changed
+      - name: Update config.yaml if version changed
         if: steps.latest.outputs.latest_version != steps.current.outputs.current_version
         run: |
           echo "Updating from ${{ steps.current.outputs.current_version }} to ${{ steps.latest.outputs.latest_version }}"
 
-          # Update QBT_VERSION in options
           yq e '.options.QBT_VERSION = "${{ steps.latest.outputs.latest_version }}"' -i ./qbittorrent_nox/config.yaml
-
-          # Update top-level version
           yq e '.version = "${{ steps.latest.outputs.latest_version }}"' -i ./qbittorrent_nox/config.yaml
 
-          # Commit and push
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add ./qbittorrent_nox/config.yaml
           git commit -m "Update qBittorrent version to ${{ steps.latest.outputs.latest_version }}"
+
+          # Authenticated push using personal access token (you must set GH_PAT in repo secrets)
           git remote set-url origin https://x-access-token:${{ secrets.GH_PAT }}@github.com/${{ github.repository }}
           git push
 
