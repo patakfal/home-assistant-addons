@@ -1,4 +1,4 @@
-name: Update qBittorrent version from Docker Hub
+name: Update qBittorrent Version from Docker Hub
 
 on:
   schedule:
@@ -65,4 +65,5 @@ jobs:
 
       - name: No update needed
         if: steps.latest.outputs.latest_version == steps.current.outputs.current_version
-        run: echo "Already up to date: ${{ steps.current.outputs.current_version }}"
+        run: |
+          echo "Already up to date: ${{ steps.current.outputs.current_version }}"
