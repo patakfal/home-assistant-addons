@@ -1,4 +1,4 @@
-name: Update qBittorrent Version from Docker Hub
+name: Update qBittorrent version from Docker Hub
 
 on:
   schedule:
