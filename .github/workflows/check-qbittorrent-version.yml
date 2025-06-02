@@ -46,6 +46,11 @@ jobs:
           yq e '.options.QBT_VERSION = "${{ steps.latest.outputs.latest_version }}"' -i ./qbittorrent_nox/config.yaml
           yq e '.version = "${{ steps.latest.outputs.latest_version }}"' -i ./qbittorrent_nox/config.yaml
 
+      - name: Update Dockerfile FROM line
+        if: ${{ steps.latest.outputs.latest_version != steps.current.outputs.current_version }}
+        run: |
+          sed -i "s|^FROM qbittorrentofficial/qbittorrent-nox:.*|FROM qbittorrentofficial/qbittorrent-nox:${{ steps.latest.outputs.latest_version }}|" Dockerfile
+
       - name: Commit and push changes
         if: ${{ steps.latest.outputs.latest_version != steps.current.outputs.current_version }}
         env:
