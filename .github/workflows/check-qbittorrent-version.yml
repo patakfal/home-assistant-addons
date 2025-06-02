@@ -49,7 +49,7 @@ jobs:
       - name: Update Dockerfile FROM line
         if: ${{ steps.latest.outputs.latest_version != steps.current.outputs.current_version }}
         run: |
-          sed -i "s|^FROM qbittorrentofficial/qbittorrent-nox:.*|FROM qbittorrentofficial/qbittorrent-nox:${{ steps.latest.outputs.latest_version }}|" Dockerfile
+          sed -i "s|^FROM qbittorrentofficial/qbittorrent-nox:.*|FROM qbittorrentofficial/qbittorrent-nox:${{ steps.latest.outputs.latest_version }}|" ./qbittorrent_nox/Dockerfile
 
       - name: Commit and push changes
         if: ${{ steps.latest.outputs.latest_version != steps.current.outputs.current_version }}
