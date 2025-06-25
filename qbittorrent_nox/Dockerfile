@@ -11,6 +11,8 @@ ENV QBT_EULA=ACCEPTEULA \
 # Set working directory
 WORKDIR /config
 
+USER root
+
 # Expose necessary ports
 EXPOSE 6881/tcp 6881/udp 8080/tcp
 
