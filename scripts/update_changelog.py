@@ -1,29 +1,35 @@
 # scripts/update_changelog.py
-import feedparser, html, os, pathlib, datetime, re
+import feedparser
+import html
+import os
+import pathlib
+import datetime
+import re
 
-# Full Docker tag, e.g. "5.1.1-1"
-full_version = os.environ["VERSION"]
+# Full version tag, e.g., 5.1.1-1 → extract just 5.1.1
+docker_tag = os.environ["VERSION"]
+version = docker_tag.split("-")[0]
 
-# Extract "5.1.1" (ignore "-1" or any suffix)
-semver = full_version.split("-")[0]
-
-# Load Atom feed
+# Parse Atom feed
 feed = feedparser.parse("https://www.qbittorrent.org/news_feed.atom")
 
-# Try to match "qBittorrent v5.1.1 release"
-summary = next(
-    (html.unescape(e.summary) for e in feed.entries if semver in e.title),
-    f"No changelog found for v{semver}"
-)
+# Find matching release entry by version in title
+entry = next((e for e in feed.entries if f"v{version}" in e.title), None)
 
-# Target file
+if entry:
+    raw_html = entry.get("content", [{}])[0].get("value", "")
+    changelog = html.unescape(raw_html)
+else:
+    changelog = f"No changelog found for version {version}"
+
+# Compose markdown header
+header = f"## v{docker_tag} – {datetime.date.today()}\n\n{changelog}\n\n"
+
+# Prepend to CHANGELOG.md (if not already there)
 path = pathlib.Path("./qbittorrent_nox/CHANGELOG.md")
-header = f"## v{full_version} – {datetime.date.today()}\n\n{summary}\n\n"
-
-# Write/prepend
 if path.exists():
     content = path.read_text(encoding="utf-8")
-    if not re.search(rf"^##\s+v{re.escape(full_version)}\b", content, re.M):
+    if not re.search(rf"^##\s+v{re.escape(docker_tag)}\b", content, re.M):
         path.write_text(header + content, encoding="utf-8")
 else:
     path.write_text("# qBittorrent-Nox Add-on Changelog\n\n" + header, encoding="utf-8")
