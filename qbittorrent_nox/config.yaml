@@ -1,6 +1,6 @@
 # qbittorrent_nox/config.yaml
 name: "qBittorrent-Nox"
-version: "5.1.0-1"
+version: ""
 slug: "qbittorrent_nox"
 description: "qBittorrent-Nox running as a Home Assistant add-on."
 url: "https://github.com/qbittorrent/qBittorrent"
@@ -22,7 +22,7 @@ ports:
   8080/tcp: 8080
 options:
   QBT_EULA: "ACCEPTEULA"
-  QBT_VERSION: "5.1.0-1"
+  QBT_VERSION: ""
   QBT_WEBUI_PORT: 8080
   TZ: "Europe/Budapest"
 schema:
