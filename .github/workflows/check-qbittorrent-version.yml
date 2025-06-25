@@ -21,12 +21,13 @@ jobs:
           curl -sL https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -o /usr/local/bin/yq
           chmod +x /usr/local/bin/yq
 
-      - name: Get latest qBittorrent image version
+      - name: Get latest qBittorrentofficial image version
         id: latest
         run: |
-          latest=$(curl -s "https://registry.hub.docker.com/v2/repositories/linuxserver/qbittorrent/tags?page_size=100" \
-            | jq -r '[.results[].name | select(test("^[0-9]+\\.[0-9]+\\.[0-9]+$"))] | sort_by(split(".") | map(tonumber)) | reverse | .[0]')
+          latest=$(curl -s "https://registry.hub.docker.com/v2/repositories/qbittorrentofficial/qbittorrent-nox/tags?page_size=100" \
+            | jq -r '[.results[].name | select(test("^[0-9]+\\.[0-9]+\\.[0-9]+-[0-9]+$"))] | sort_by(split("-")[0] | split(".") | map(tonumber)) | reverse | .[0]')
           echo "latest_version=$latest" >> "$GITHUB_OUTPUT"
+
 
       - name: Get current version from config.yaml
         id: current
