@@ -67,11 +67,11 @@ jobs:
       env:
         VERSION: ${{ steps.latest.outputs.latest_version }}
       run: |
-        python3 - <<'PY'
+        python3 - <<EOF
 import feedparser, html, os, pathlib, datetime, re
-ver      = os.environ["VERSION"]
-feed     = feedparser.parse("https://www.qbittorrent.org/news_feed.atom")
-summary  = next((html.unescape(e.summary) for e in feed.entries if ver in e.title), "")
+ver = os.environ["VERSION"]
+feed = feedparser.parse("https://www.qbittorrent.org/news_feed.atom")
+summary = next((html.unescape(e.summary) for e in feed.entries if ver in e.title), "")
 if not summary:
     summary = f"No changelog found for v{ver}"
 
@@ -84,7 +84,7 @@ if path.exists():
         path.write_text(header + content, encoding="utf-8")
 else:
     path.write_text("# qBittorrent-Nox Add-on Changelog\n\n" + header,encoding="utf-8")
-PY
+EOF
 
     # 7 Commit & push
     - name: Commit & push
