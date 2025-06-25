@@ -2,7 +2,7 @@ name: Update qBittorrent Version
 
 on:
   schedule:
-    - cron: '0 2 * * 0'          # once a week, Sunday 02:00 UTC
+    - cron: '0 2 * * 0'    # every Sunday at 2:00 UTC
   workflow_dispatch:
 
 jobs:
@@ -10,22 +10,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # 1 Checkout
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
         persist-credentials: false
 
-    # 2 Helpers
-    - name: Install jq / yq
+    - name: Install jq / yq / feedparser
       run: |
         sudo apt-get update
-        sudo apt-get install -y jq
+        sudo apt-get install -y jq python3-pip
+        pip3 install feedparser html5lib
         curl -sL https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 \
           -o /usr/local/bin/yq
         chmod +x /usr/local/bin/yq
 
-    # 3 Latest tag from qbittorrentofficial/qbittorrent-nox
     - name: Get latest qBittorrentofficial image version
       id: latest
       run: |
@@ -36,7 +34,6 @@ jobs:
                   | reverse | .[0]')
         echo "latest_version=$latest" >> "$GITHUB_OUTPUT"
 
-    # 4 Current version in config.yaml
     - name: Get current version from config.yaml
       id: current
       run: |
@@ -48,56 +45,30 @@ jobs:
         echo "Latest : ${{ steps.latest.outputs.latest_version }}"
         echo "Current: ${{ steps.current.outputs.current_version }}"
 
-    # 5 Update files if needed
     - name: Update config.yaml & Dockerfile
       if: ${{ steps.latest.outputs.latest_version != steps.current.outputs.current_version }}
       run: |
         new="${{ steps.latest.outputs.latest_version }}"
         echo "🔄 Updating to version $new"
-
         yq e '.options.QBT_VERSION = strenv(new)' -i ./qbittorrent_nox/config.yaml
         yq e '.version            = strenv(new)' -i ./qbittorrent_nox/config.yaml
+        sed -i "s|^FROM qbittorrentofficial/qbittorrent-nox:.*|FROM qbittorrentofficial/qbittorrent-nox:${new}|" ./qbittorrent_nox/Dockerfile
 
-        sed -i "s|^FROM qbittorrentofficial/qbittorrent-nox:.*|FROM qbittorrentofficial/qbittorrent-nox:${new}|" \
-          ./qbittorrent_nox/Dockerfile
-
-    # 6 Write / prepend CHANGELOG.md
     - name: Update CHANGELOG.md
       if: ${{ steps.latest.outputs.latest_version != steps.current.outputs.current_version }}
       env:
         VERSION: ${{ steps.latest.outputs.latest_version }}
       run: |
-        python3 - <<'PY'
-import feedparser, html, os, pathlib, datetime, re
-ver      = os.environ["VERSION"]
-feed     = feedparser.parse("https://www.qbittorrent.org/news_feed.atom")
-summary  = next((html.unescape(e.summary) for e in feed.entries if ver in e.title), "")
-if not summary:
-    summary = f"No changelog found for v{ver}"
+        python3 scripts/update_changelog.py
 
-path = pathlib.Path("./qbittorrent_nox/CHANGELOG.md")
-header = f"## v{ver} – {datetime.date.today()}\n\n{summary}\n\n"
-
-if path.exists():
-    content = path.read_text(encoding="utf-8")
-    if not re.search(rf"^##\s+v{re.escape(ver)}\b", content, re.M):
-        path.write_text(header + content, encoding="utf-8")
-else:
-    path.write_text("# qBittorrent-Nox Add-on Changelog\n\n" + header,encoding="utf-8")
-PY
-
-    # 7 Commit & push
     - name: Commit & push
       if: ${{ steps.latest.outputs.latest_version != steps.current.outputs.current_version }}
       env:
-        GH_PAT: ${{ secrets.GH_PAT }}   # classic PAT with `repo` scope
+        GH_PAT: ${{ secrets.GH_PAT }}
       run: |
         git config user.name  "github-actions[bot]"
         git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-        git add qbittorrent_nox/config.yaml \
-                qbittorrent_nox/Dockerfile \
-                qbittorrent_nox/CHANGELOG.md
+        git add qbittorrent_nox/config.yaml qbittorrent_nox/Dockerfile qbittorrent_nox/CHANGELOG.md
         git commit -m "⬆️ qBittorrent → ${{ steps.latest.outputs.latest_version }}"
         git remote set-url origin https://x-access-token:${GH_PAT}@github.com/${{ github.repository }}
         git push origin HEAD:main
