@@ -5,4 +5,4 @@ set -e
 mkdir -p /config /downloads
 
 # Start qBittorrent-Nox
-exec qbittorrent-nox --webui-port=$QBT_WEBUI_PORT
+exec qbittorrent-nox --webui-port=$QBT_WEBUI_PORT --profile=/config
