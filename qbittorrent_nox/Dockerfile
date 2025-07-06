@@ -1,5 +1,5 @@
 # Use the official qbittorrent-nox image as base
-FROM qbittorrentofficial/qbittorrent-nox:5.1.1-1
+FROM qbittorrentofficial/qbittorrent-nox:5.1.2-1
 
 # Set environment variables
 ENV QBT_EULA=ACCEPTEULA \

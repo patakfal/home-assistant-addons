@@ -1,5 +1,46 @@
 # qBittorrent-Nox Add-on Changelog
 
+## v5.1.2-1 – 2025-07-06
+
+<p>qBittorrent v5.1.2 was released.<br />
+<strong>SECURITY:</strong> It contains security fixes for the WebAPI, Rss and Search modules.
+macOS builds will be available on a later date.<br />
+<strong>Builds are currently available only from old trusty SourceForge.</strong> FossHub either locked the account or has login issues. Time will tell.</p>
+<details>
+Library versions
+<table>
+  <thead>
+    <tr>
+      <th scope="col">Library</th>
+      <th scope="col">Version</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>libtorrent</td>
+      <td>1.2.20+git3ae563b043 / 2.0.11+git122c6edb33</td>
+    </tr>
+    <tr>
+      <td>Qt</td>
+      <td>6.9.1</td>
+    </tr>
+    <tr>
+      <td>Boost</td>
+      <td>1.86 / 1.88</td>
+    </tr>
+  </tbody>
+</table>
+</details>
+<p>v5.1.2 changelog:</p>
+<ul>
+<li>BUGFIX: Add fallback to update mechanism (sledgehammer999)</li>
+<li>WEBUI: Fix incorrectly backported changes (glassez)</li>
+<li>WEBAPI: Trim leading whitespaces on Run External Program fields (Chocobo1)</li>
+<li>RSS/SEARCH: Prevent opening local files if web page is expected (glassez)</li>
+<li>MACOS: Make qBittorrent quit on MacOS with main window closed (Ryu481)</li>
+<li><a href="https://github.com/qbittorrent/qBittorrent/compare/release-5.1.1...release-5.1.2">Full changes</a></li>
+</ul>
+
 ## v5.1.1-1 – 2025-06-25
 
 <p>qBittorrent v5.1.1 was released.<br />
